@@ -1,0 +1,10 @@
+package ru.ya.enums;
+
+public enum SuccessfullOperation {
+    USER_CREATING,
+    PASSWORD_EDITING,
+    OTHER_DATA_EDITING,
+    BANK_ACCOUNT_CREATING,
+    BANK_ACCOUNT_DELETING,
+    TRANSFER_SUCCESSFULL
+}

@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: center;
+        }
+        tr:hover {
+            background-color: #D6EEEE
+        }
+    </style>
+
+    <title>Банковское приложение</title>
+</head>
+
+<body>
+<a href="/logout" style="float:right;">
+    <b>ВЫЙТИ &cudarrr;</b>
+</a>
+
+<div style="padding:2px;">
+    <form method="post" th:action="@{/user/{login}/delete-user(login=${userDto.login})}" th:object="${userDto}">
+        <table style="width:51%;margin-left:auto;margin-right:auto;border-radius:2%;padding:10px;background-color:whitesmoke;float:left">
+            <tr>
+                <td style="font-weight:bold;">Логин</td>
+                <td colspan="2" th:text="${userDto.login}"/>
+                <td>
+                    <form th:action="@{/user/{login}/delete-user(login=${userDto.login})}" method="post"
+                          style="display:inline;">
+                        <input type="hidden" name="_method" value="delete"/>
+                        <button type="submit">Удалить пользователя</button>
+                    </form>
+                </td>
+            </tr>
+        </table>
+    </form>
+</div>
+
+<div>
+    <table style="width:51%;border-collapse:collapse">
+        <tbody>
+        <tr>
+            <td colspan="2" style="font-weight:bold;text-align:center">Внести изменения в данные клиента</td>
+        </tr>
+        <tr>
+            <td style="font-weight:bold;">Изменение пароля</td>
+            <td>
+                <form method="post" th:action="@{/user/{login}/edit-password(login=${userDto.login})}"
+                      th:object="${user}">
+                    Новый пароль: <input id="password" name="password" minlength="1" maxlength="20" type="password"
+                                         th:value="${password}" style="width:100%" required/>
+                    </p>
+                    <p>
+                        Повторите пароль: <input id="confirmedPassword" name="confirmedPassword" minlength="1"
+                                                 maxlength="20" type="password" th:value="${confirmedPassword}"
+                                                 style="width:100%" oninput=checkIfPasswordConfirmed()
+                                                 required/>
+                    </p>
+                    <input type="hidden" th:field="${userDto.id}">
+                    <input type="hidden" th:field="${userDto.login}">
+                    <input type="hidden" th:field="${userDto.name}">
+                    <input type="hidden" th:field="${userDto.surname}">
+                    <input type="hidden" th:field="${userDto.birthdate}">
+                    <input type="hidden" th:field="${userDto.role}">
+                    <button type="submit" class="submitbutton">Изменить пароль</button>
+                </form>
+            </td>
+        </tr>
+        <tr>
+            <td style="font-weight:bold;">Изменение персональных данных</td>
+            <td>
+                <form method="post" th:action="@{/user/{login}/edit-other-data(login=${userDto.login})}"
+                      th:object="${user}">
+                    <p>
+                        Имя: <input id="name2" name="name" minlength="1" maxlength="20" type="text"
+                                    th:value="${name}" style="width:100%" required/>
+                    </p>
+                    <p>
+                        Фамилия: <input id="surname2" name="surname" minlength="1"
+                                        maxlength="20" type="text" th:value="${surname}" style="width:100%" required/>
+                    </p>
+                    <p>
+                        Дата рождения: <input id="birthdate2" name="birthdate" type="date" th:value="${birthdate}"
+                                              style="width:100%" oninput=checkIfNotAdult() required/>
+                    </p>
+                    <input type="hidden" th:field="${userDto.id}">
+                    <input type="hidden" th:field="${userDto.login}">
+                    <input type="hidden" th:field="${userDto.password}">
+                    <input type="hidden" th:field="${userDto.role}">
+                    <button type="submit" class="submitbutton">Изменить имя, фамилию, дату рождения</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<div>
+    <table style="width:51%;border-collapse:collapse">
+        <tbody>
+        <tr>
+            <td colspan="6" style="font-weight:bold;text-align:center">Открытые счета</td>
+        </tr>
+        <tr>
+            <th class="centered">Номер счета</th>
+            <th class="centered">Валюта</th>
+            <th class="centered">Баланс, ед.</th>
+            <th class="centered">Удалить счет</th>
+            <th class="centered">Добавить сумму на счет</th>
+            <th class="centered">Снять со счета</th>
+        </tr>
+        <tr th:each="bankAccountDto : ${userDto.getBankAccountDtoList()}">
+            <td th:text="${bankAccountDto.accountNumber}"/>
+            <td th:text="${bankAccountDto.currency}"/>
+            <td th:text="${bankAccountDto.accountValue}" style="text-align:right"/>
+            <td>
+                <form th:action="@{/user/delete-bank-account/{id}(id=${bankAccountDto.getId()})}" method="post"
+                      style="display:inline;">
+                    <input type="hidden" name="_method" value="delete"/>
+                    <button type="submit">Удалить счет</button>
+                </form>
+            </td>
+            <td>
+                <form th:action="@{/user/increase-sum}" method="POST" style="display:inline-block"
+                      th:object="${cash}">
+                    <input id="cashInc" name="sum" type="number" min="0.01" step="0.01" style="width:60px" required/>
+                    <input type="hidden" name="userLogin" th:value="${userDto.login}">
+                    <input type="hidden" name="accountNumber" th:value="${bankAccountDto.accountNumber}">
+                    <button type="submit" class="submitbutton" onclick=checkSumInc()>Добавить</button>
+                </form>
+            </td>
+            <td>
+                <form th:action="@{/user/decrease-sum}" method="POST" style="display:inline-block"
+                      th:object="${cash}">
+                    <input id="cashDec" name="sum" type="number" min="0.01" step="0.01" style="width:60px" required/>
+                    <input type="hidden" name="userLogin" th:value="${userDto.login}">
+                    <input type="hidden" name="accountNumber" th:value="${bankAccountDto.accountNumber}">
+                    <button type="submit" class="submitbutton" onclick=checkSumDec()>Снять</button>
+                </form>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="3" style="font-weight:bold">Добавить банковский счет</td>
+            <td colspan="3">
+                <form method="post" th:action="@{/user/add-bank-account}" th:object="${newAccountCurrency}">
+                    <select name="currency" required>
+                        <option hidden value=''>Выберите валюту</option>
+                        <option th:each="currency : ${T(ru.ya.enums.Currency).values()}"
+                                th:value="${currency}"
+                                th:text="${T(ru.ya.enums.Currency).getCurrencyName(currency)}">
+                        </option>
+                    </select>
+                    <button type="submit" class="submitbutton">Добавить счет</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<div>
+    <table style="width:51%;border-collapse:collapse">
+        <tr>
+            <td colspan="6" style="font-weight:bold;text-align:center">Перевод на счет</td>
+        </tr>
+        <tr>
+            <th class="centered" colspan="2">Кому</th>
+            <th class="centered">Со счета в валюте</th>
+            <th class="centered">На счет в валюте</th>
+            <th class="centered">Сумма</th>
+            <th class="centered">Перевести</th>
+        </tr>
+        <tr>
+            <form method="post" th:action="@{/transfer}" th:object="${transferData}">
+                <td colspan="2">Себе</td>
+                <input hidden name="senderId" th:value="${userDto.id}"/>
+                <td>
+                    <select name="accountNumberFrom" id="accountNumberFrom" required>
+                        <option th:each="bankAccountDto : ${userDto.getBankAccountDtoList()}"
+                                th:value="${bankAccountDto.accountNumber}"
+                                th:text="${T(ru.ya.enums.Currency).getCurrencyName(bankAccountDto.currency)}">
+                           <!-- th:text="${bankAccountDto.accountNumber} + ' (' + ${T(ru.ya.enums.Currency).getCurrencyName(bankAccountDto.currency)} + ')'">-->
+                        </option>
+                    </select>
+                </td>
+                <td>
+                    <select name="accountNumberTo" id="accountNumberTo" required>
+                        <option th:each="bankAccountDto : ${userDto.getBankAccountDtoList()}"
+                                th:value="${bankAccountDto.accountNumber}"
+                                th:text="${T(ru.ya.enums.Currency).getCurrencyName(bankAccountDto.currency)}">
+                            <!-- th:text="${bankAccountDto.accountNumber} + ' (' + ${T(ru.ya.enums.Currency).getCurrencyName(bankAccountDto.currency)} + ')'">-->
+                        </option>
+                    </select>
+                </td>
+                <td>
+                    <input name="sum" type="number" min="0.01" step="0.01" style="width:100%" required/>
+                </td>
+                <td style="text-align:right ">
+                    <button onclick=checkCurrency()>Перевести</button>
+                </td>
+            </form>
+        </tr>
+        <tr>
+            <form method="post" th:action="@{/transfer}" th:object="${transferData}">
+                <td style="font-weight:bold;">Другому клиенту</td>
+                <input hidden name="senderId" th:value="${userDto.id}"/>
+                <td>
+                    Кому
+                    <select name="receiverId" <!--th:field="*{selectedUserDtoLogin}"-->>
+                    <option th:each="userDtoReceiver : ${userDtos.getUserDtoList()}" th:value="${userDtoReceiver.getId()}"
+                            th:text="${userDtoReceiver.getLogin()}">
+                    </option>
+                    </select>
+                </td>
+                <td>
+                    <select name="accountNumberFrom" id="accountNumberFrom2" required>
+                        <option th:each="bankAccountDto : ${userDto.getBankAccountDtoList()}"
+                                th:value="${bankAccountDto.accountNumber}"
+                                th:text="${T(ru.ya.enums.Currency).getCurrencyName(bankAccountDto.currency)}">
+                            <!-- th:text="${bankAccountDto.accountNumber} + ' (' + ${T(ru.ya.enums.Currency).getCurrencyName(bankAccountDto.currency)} + ')'">-->
+                        </option>
+                    </select>
+                </td>
+                <td>
+                    <select name="currencyNameTo" id="currencyNameTo" required>
+                        <option th:each="currency : ${T(ru.ya.enums.Currency).values()}"
+                                th:value="${currency}"
+                                th:text="${T(ru.ya.enums.Currency).getCurrencyName(currency)}">
+                            </option>
+                    </select>
+                </td>
+                <td>
+                    <input name="sum" type="number" min="0.01" step="0.01" style="width:100%" required/>
+                </td>
+                <td style="text-align:right">
+                    <button>Перевести</button>
+                </td>
+            </form>
+        </tr>
+    </table>
+</div>
+
+<div style="padding:2px;">
+    <table style="width:51%;margin-left:auto;margin-right:auto;border-radius:2%;padding:10px;background-color:whitesmoke;float:left">
+        <tr>
+            <td colspan="3" style="font-weight:bold;text-align:center">Курсы валют</td>
+        </tr>
+        <tr>
+            <th class="centered">Валюта</th>
+            <th class="centered">Покупка, ₽</th>
+            <th class="centered">Продажа, ₽</th>
+        </tr>
+        <tr th:each="currencyRate : ${currencyRates.currencyRatesList}">
+            <td th:text="${currencyRate.currencyName}" style="text-align:right"/>
+            <td th:text="${currencyRate.buyRate}" style="text-align:right"/>
+            <td th:text="${currencyRate.sellRate}" style="text-align:right"/>
+        <tr/>
+    </table>
+</div>
+
+<script>
+    function checkIfPasswordConfirmed() {
+        var password = document.getElementById("password").value;
+        var confirmedPassword = document.getElementById("confirmedPassword").value;
+        if (password !== confirmedPassword) {
+            alert("Пароли не совпадают. Введите повторно корректный пароль. В противном случае, пользователь не будет сохранен");
+        }
+    }
+    function checkIfNotAdult() {
+        var birthdate = Date.parse(document.getElementById("birthdate2").value);
+        var currentDate = Date.now();
+        var delta = parseInt((currentDate - birthdate) / (1000 * 60 * 60 * 24 * 365));
+        if (delta < 18) {
+            alert("Пользователь не достиг 18 лет. Заводить банковский аккаунт ему запрещено");
+        }
+    }
+    function checkSumInc() {
+        var value = document.getElementById("cashInc").value;
+        if (value === null || value === "") {
+            alert("Для пополнения нужно ввести сумму");
+        }
+    }
+    function checkSumDec() {
+        var value = document.getElementById("cashDec").value;
+        if (value === null || value === "") {
+            alert("Для снятия нужно ввести сумму");
+        }
+    }
+    function checkCurrency() {
+        var accountNumberFrom = document.getElementById("accountNumberFrom").value;
+        var accountNumberTo = document.getElementById("accountNumberTo").value;
+        if (accountNumberFrom == accountNumberTo) {
+            alert("Валюты должны отличаться. В противном случае, перевод совершен не будет");
+        }
+    }
+</script>
+</body>
+
+</html>
