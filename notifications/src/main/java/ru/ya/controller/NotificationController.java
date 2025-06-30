@@ -1,4 +1,3 @@
-/*
 package ru.ya.controller;
 
 import org.slf4j.Logger;
@@ -79,4 +78,3 @@ public class NotificationController {
         return "redirect:/";
     }
 }
-*/

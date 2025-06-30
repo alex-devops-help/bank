@@ -1,4 +1,3 @@
-/*
 package ru.ya.controller;
 
 import org.slf4j.Logger;
@@ -51,4 +50,3 @@ public class TransferController {
         return responseFromModule.getStringResponseFromModuleAccounts("/transfer", coupleOfValuesDto);
     }
 }
-*/
