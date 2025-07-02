@@ -5,18 +5,15 @@ services:
     image: quay.io/keycloak/keycloak:26.1.3
 #    image: sleighzy/keycloak
 #    image: bitnami/keycloak:20.0.5-debian-11-r13
-#22.0.1-debian-11-r20
-#21.1.1-debian-11-r20
-#20.0.5-debian-11-r13    
+#	22.0.1-debian-11-r20
+#	21.1.1-debian-11-r20
+#	20.0.5-debian-11-r13    
     container_name: keycloak
     ports:
       - "8080:8080"
-      - "8443:8443"
-      - "9000:9000"
+#      - "8443:8443"
+#      - "9000:9000"
 
-    volumes:
-      - ./client_json_files:/client_json_files
-      
     environment:
       - KC_PORT=8080
       - KC_BOOTSTRAP_ADMIN_USERNAME=admin
@@ -29,25 +26,56 @@ services:
       - KEYCLOAK_ADMIN_USER=admin
       - KEYCLOAK_ADMIN_PASSWORD=admin
       - KEYCLOAK_DATABASE_VENDOR=dev-mem
+#     - KEYCLOAK_EXTRA_ARGS: --import-realm
 
-#     KEYCLOAK_EXTRA_ARGS: --import-realm
+    volumes:
+      - ./:/project:ro
 
     restart: unless-stopped
     command:
       - start-dev
 
-  keycloak-hc:
+  keycloak-hc1: # Healthcheck sidecar because Keycloak container lacks curl and even package manager
+    container_name: keycloak-hc1
+    hostname: keycloak-hc1
     image: alpine/curl
     depends_on:
       - keycloak
-    command: [ "sleep", "infinity" ]
+    command: ash -c "apk add bash; sleep infinity"
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "--head", "-fsS", "http://keycloak:9000/health/ready"]
+      test: /utils/test_ports.sh
       start_period: 15s
-      interval: 3s
-      timeout: 2s
+      interval: 5s
+      timeout: 3s
       retries: 50
+    volumes:
+      - ./utils:/utils:ro
+
+  keycloak-hc2: # Loads json clients into Keycloak
+    container_name: keycloak-configurator
+    image: docker:cli
+    depends_on:
+      keycloak-hc1:
+        condition: service_healthy
+    restart: unless-stopped
+    command:
+      - ash
+      - -c
+      - apk add --no-cache bash curl jq && /utils/load_json_clients.sh && sleep infinity
+    healthcheck:
+      start_period: 5s
+      interval: 7s
+      timeout: 5s
+      retries: 5
+      test: /utils/test_clients.sh
+      #[ $( /utils/list_json_clients.sh | grep clientId | grep -E 'accounts|cash|exchange|front-ui|transfer' | wc -l) -eq 5 ]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./utils:/utils:ro
+      - ./:/project:ro
+    tty: true
+    stdin_open: true
 
   accounts:
      build: accounts/
@@ -58,7 +86,7 @@ services:
          condition: service_started
        notifications:
          condition: service_started
-       keycloak-hc:
+       keycloak-hc2:
          condition: service_healthy
      environment:
        - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/bankapp
@@ -76,10 +104,13 @@ services:
     ports:
      - "8093:8093"
     depends_on:
-      keycloak-hc:
-       condition: service_healthy
+      keycloak-hc2:
+        condition: service_healthy
     environment:
       - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://keycloak:8080/realms/master
+      - SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://keycloak:8080/realms/master
+      - keycloak-location=http://keycloak:8080
+      - KEYCLOAK_LOCATION=http://keycloak:8080
 #      - SPRING_CLOUD_CONSUL_HOST=consul
 #      - SPRING_CLOUD_CONSUL_PORT=8500
 
@@ -94,7 +125,7 @@ services:
         condition: service_started
       blocker:
         condition: service_started
-      keycloak-hc:
+      keycloak-hc2:
         condition: service_healthy
     environment:
       - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://keycloak:8080/realms/master
@@ -111,13 +142,18 @@ services:
     depends_on:
       exchange-generator:
         condition: service_started
-      keycloak-hc:
+      keycloak-hc2:
         condition: service_healthy
     environment:
       - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://keycloak:8080/realms/master
       - SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_ISSUER_URI=http://keycloak:8080/realms/master
       - SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_EXCHANGE_CLIENT_ID=exchange
       - SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_EXCHANGE_CLIENT_SECRET=2VgTnsgA6i8dGoZPrJi8pk5ePDQK2oAp
+ 
+      - SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://keycloak:8080/realms/master
+      - keycloak-location=http://keycloak:8080
+      - KEYCLOAK_LOCATION=http://keycloak:8080
+      
 #      - SPRING_CLOUD_CONSUL_HOST=consul
 #      - SPRING_CLOUD_CONSUL_PORT=8500
 
@@ -126,7 +162,7 @@ services:
     ports:
       - "8094:8094"
     depends_on:
-      keycloak-hc:
+      keycloak-hc2:
         condition: service_healthy
     environment:
       - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://keycloak:8080/realms/master
@@ -144,7 +180,7 @@ services:
         condition: service_started
       exchange-generator:
         condition: service_started
-      keycloak-hc:
+      keycloak-hc2:
         condition: service_healthy
     environment:
       - SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_ISSUER_URI=http://keycloak:8080/realms/master
@@ -158,10 +194,11 @@ services:
     ports:
       - "8091:8091"
     depends_on:
-      keycloak-hc:
+      keycloak-hc2:
         condition: service_healthy
     environment:
       - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://keycloak:8080/realms/master
+      - SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://keycloak:8080/realms/master
 #      - SPRING_CLOUD_CONSUL_HOST=consul
 #      - SPRING_CLOUD_CONSUL_PORT=8500
 
@@ -178,7 +215,7 @@ services:
         condition: service_started
       blocker:
         condition: service_started
-      keycloak-hc:
+      keycloak-hc2:
         condition: service_healthy
     environment:
       - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://keycloak:8080/realms/master

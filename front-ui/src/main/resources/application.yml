@@ -2,6 +2,9 @@ server:
   port: 8081
 
 spring:
+  cloud:
+    compatibility-verifier:
+      enabled: false
   application:
     name: front-ui
   #config:
@@ -74,3 +77,4 @@ module-accounts: http://accounts.myapp.local/
 module-cash: http://cash.myapp.local/
 module-exchange-generator: http://exchange-generator.myapp.local/
 module-transfer: http://transfer.myapp.local/
+
