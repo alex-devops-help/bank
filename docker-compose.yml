@@ -35,20 +35,21 @@ services:
     command:
       - start-dev
 
+
   keycloak-hc1: # Healthcheck sidecar because Keycloak container lacks curl and even package manager
     container_name: keycloak-hc1
     hostname: keycloak-hc1
     image: alpine/curl
     depends_on:
       - keycloak
-    command: ash -c "apk add bash; sleep infinity"
+    command: ash -c "date; apk add bash && sleep infinity"
     restart: unless-stopped
     healthcheck:
       test: /utils/test_ports.sh
-      start_period: 15s
-      interval: 5s
-      timeout: 3s
-      retries: 50
+      start_period: 30s
+      interval: 7s
+      timeout: 5s
+      retries: 20
     volumes:
       - ./utils:/utils:ro
 
@@ -58,44 +59,40 @@ services:
     depends_on:
       keycloak-hc1:
         condition: service_healthy
-    restart: unless-stopped
-    command:
-      - ash
-      - -c
-      - apk add --no-cache bash curl jq && /utils/load_json_clients.sh && sleep infinity
-    healthcheck:
-      start_period: 5s
-      interval: 7s
-      timeout: 5s
-      retries: 5
-      test: /utils/test_clients.sh
-      #[ $( /utils/list_json_clients.sh | grep clientId | grep -E 'accounts|cash|exchange|front-ui|transfer' | wc -l) -eq 5 ]
+    command: ash -c "date; apk add --no-cache bash curl jq && sleep 5s && /utils/load_json_clients.sh && sleep 5s && date"
+#    healthcheck:
+#      start_period: 15s
+#      interval: 7s
+#      timeout: 5s
+#      retries: 5
+#      test: /utils/test_clients.sh
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./utils:/utils:ro
       - ./:/project:ro
-    tty: true
-    stdin_open: true
+#    tty: true
+#    stdin_open: true
 
   accounts:
-     build: accounts/
-     ports:
-       - "8070:8070"
-     depends_on:
-       db:
-         condition: service_started
-       notifications:
-         condition: service_started
-       keycloak-hc2:
-         condition: service_healthy
-     environment:
-       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/bankapp
-       - SPRING_DATASOURCE_USERNAME=s
-       - SPRING_DATASOURCE_PASSWORD=sa
-       - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://keycloak:8080/realms/master
-       - SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_ISSUER_URI=http://keycloak:8080/realms/master
-       - SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_ACCOUNTS_CLIENT_ID=accounts
-       - SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_ACCOUNTS_CLIENT_SECRET=cqvRnkAwGQMMsl27GqHCy4Ke3YwBKSOE
+    build: accounts/
+    ports:
+      - "8070:8070"
+    depends_on:
+      db:
+        condition: service_started
+      notifications:
+        condition: service_started
+      keycloak-hc2:
+#        condition: service_healthy
+        condition: service_completed_successfully
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/bankapp
+      - SPRING_DATASOURCE_USERNAME=s
+      - SPRING_DATASOURCE_PASSWORD=sa
+      - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://keycloak:8080/realms/master
+      - SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_ISSUER_URI=http://keycloak:8080/realms/master
+      - SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_ACCOUNTS_CLIENT_ID=accounts
+      - SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_ACCOUNTS_CLIENT_SECRET=cqvRnkAwGQMMsl27GqHCy4Ke3YwBKSOE
 #       - SPRING_CLOUD_CONSUL_HOST=consul
 #       - SPRING_CLOUD_CONSUL_PORT=8500
 
@@ -105,7 +102,8 @@ services:
      - "8093:8093"
     depends_on:
       keycloak-hc2:
-        condition: service_healthy
+#        condition: service_healthy
+        condition: service_completed_successfully
     environment:
       - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://keycloak:8080/realms/master
       - SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://keycloak:8080/realms/master
@@ -126,7 +124,8 @@ services:
       blocker:
         condition: service_started
       keycloak-hc2:
-        condition: service_healthy
+#        condition: service_healthy
+        condition: service_completed_successfully
     environment:
       - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://keycloak:8080/realms/master
       - SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_ISSUER_URI=http://keycloak:8080/realms/master
@@ -143,7 +142,8 @@ services:
       exchange-generator:
         condition: service_started
       keycloak-hc2:
-        condition: service_healthy
+#        condition: service_healthy
+        condition: service_completed_successfully
     environment:
       - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://keycloak:8080/realms/master
       - SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_ISSUER_URI=http://keycloak:8080/realms/master
@@ -163,7 +163,8 @@ services:
       - "8094:8094"
     depends_on:
       keycloak-hc2:
-        condition: service_healthy
+#        condition: service_healthy
+        condition: service_completed_successfully
     environment:
       - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://keycloak:8080/realms/master
 #      - SPRING_CLOUD_CONSUL_HOST=consul
@@ -181,7 +182,9 @@ services:
       exchange-generator:
         condition: service_started
       keycloak-hc2:
-        condition: service_healthy
+#        condition: service_healthy
+        condition: service_completed_successfully
+
     environment:
       - SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_ISSUER_URI=http://keycloak:8080/realms/master
       - SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_FRONT_UI_CLIENT_ID=front-ui
@@ -195,7 +198,9 @@ services:
       - "8091:8091"
     depends_on:
       keycloak-hc2:
-        condition: service_healthy
+#        condition: service_healthy
+        condition: service_completed_successfully
+
     environment:
       - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://keycloak:8080/realms/master
       - SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://keycloak:8080/realms/master
@@ -216,7 +221,9 @@ services:
       blocker:
         condition: service_started
       keycloak-hc2:
-        condition: service_healthy
+#        condition: service_healthy
+        condition: service_completed_successfully
+        
     environment:
       - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://keycloak:8080/realms/master
       - SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_ISSUER_URI=http://keycloak:8080/realms/master
