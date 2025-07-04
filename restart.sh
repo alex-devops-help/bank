@@ -1,7 +1,9 @@
-docker-compose down --remove-orphans;
+Service=$1;
 
-# docker rmi $(docker images -q);
+docker-compose down --remove-orphans $Service;
+
+docker rmi -f $(docker images | grep bank | awk '{print $3}');
 docker system prune -f;
 
-docker compose build --no-cache;
-docker-compose up --force-recreate -d;
+docker compose build --no-cache $Service;
+docker-compose up --force-recreate -d $Service;

@@ -107,8 +107,8 @@ services:
     environment:
       - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://keycloak:8080/realms/master
       - SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://keycloak:8080/realms/master
-      - keycloak-location=http://keycloak:8080
-      - KEYCLOAK_LOCATION=http://keycloak:8080
+#      - keycloak-location=http://keycloak:8080
+#      - KEYCLOAK_LOCATION=http://keycloak:8080
 #      - SPRING_CLOUD_CONSUL_HOST=consul
 #      - SPRING_CLOUD_CONSUL_PORT=8500
 
@@ -151,8 +151,8 @@ services:
       - SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_EXCHANGE_CLIENT_SECRET=2VgTnsgA6i8dGoZPrJi8pk5ePDQK2oAp
  
       - SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://keycloak:8080/realms/master
-      - keycloak-location=http://keycloak:8080
-      - KEYCLOAK_LOCATION=http://keycloak:8080
+#      - keycloak-location=http://keycloak:8080
+#      - KEYCLOAK_LOCATION=http://keycloak:8080
       
 #      - SPRING_CLOUD_CONSUL_HOST=consul
 #      - SPRING_CLOUD_CONSUL_PORT=8500

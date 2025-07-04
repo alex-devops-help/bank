@@ -32,7 +32,7 @@ load_client2()
 #			mkdir /client_json_files;
 #		fi;
 #		cp $File /client_json_files/;
-		docker exec -ti keycloak /opt/keycloak/bin/kcadm.sh create clients -r master -f $File  --server http://localhost:8080 --realm master --user admin --password admin;
+		docker exec keycloak /opt/keycloak/bin/kcadm.sh create clients -r master -f $File  --server http://localhost:8080 --realm master --user admin --password admin;
 #		/client_json_files/$Module.json
 	else
 		echo "===> Missing $File";
