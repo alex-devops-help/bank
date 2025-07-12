@@ -1,3 +1,7 @@
+#!/usr/bin/env bash
+
+# The AUTHOR of this file is Alexander Borisovich Prokopyev (devops@aulix.com), July 2025
+
 set -x;
 
 Version=v1.32.6;
