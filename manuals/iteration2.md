@@ -72,4 +72,4 @@ reinstall.sh сначала пытается полностью удалить �
 
 
 
-# The AUTHOR of this file is Alexander Borisovich Prokopyev (devops@aulix.com), July 2025
+#### The AUTHOR of this file is Alexander Borisovich Prokopyev (devops@aulix.com), July 2025
