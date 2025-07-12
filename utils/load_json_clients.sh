@@ -1,39 +1,25 @@
 #!/usr/bin/env bash
 
+# The AUTHOR of this file is Alexander Borisovich Prokopyev (devops@aulix.com), July 2025
+
 #set -x;
 
-#load_client()
-#{
-#	local Dir=$1;
-#
-#        docker run \
-#            -e KEYCLOAK_URL="http://keycloak:8080/" \
-#            -e KEYCLOAK_USER="admin" \
-#            -e KEYCLOAK_PASSWORD="admin" \
-#            -e KEYCLOAK_AVAILABILITYCHECK_ENABLED=true \
-#            -e KEYCLOAK_AVAILABILITYCHECK_TIMEOUT=120s \
-#            -e IMPORT_FILES_LOCATIONS="/config/*.json" \
-#            -v $Dir:/config \
-#            --network bank_default \
-#            adorsys/keycloak-config-cli:latest;
-#            
-#      	 return $?;
-#}
+User=admin;
+Password=admin;
 
-#load_client /project/accounts/src/main/resources && echo $?;
+TmpDir=/tmp/json_clients;
 
-load_client2()
+
+load_client()
 {
-	Module=$1;
-	
-	File=/project/$Module/src/main/resources/$Module.json;
+	local Module=$1;
+	local FileName=$Module.json;
+	local File=/project/$Module/src/main/resources/$FileName;
 	if [ -f $File ]; then
-#		if ! [ -d /client_json_files ]; then
-#			mkdir /client_json_files;
-#		fi;
-#		cp $File /client_json_files/;
-		docker exec keycloak /opt/keycloak/bin/kcadm.sh create clients -r master -f $File  --server http://localhost:8080 --realm master --user admin --password admin;
-#		/client_json_files/$Module.json
+#		docker exec keycloak /opt/keycloak/bin/kcadm.sh create clients -f $File  --server http://localhost:8080 --realm master --user $User --password $Password;
+#		kubectl -n keycloak cp $File bank-0:/tmp/; # tar missing in the Keycloak official container image
+		kubectl -n keycloak exec -i bank-0 -- bash -c "cat > /$TmpDir/$FileName" < /$File;
+		kubectl -n keycloak exec -ti bank-0 -- /opt/keycloak/bin/kcadm.sh create clients -f /$TmpDir/$FileName  --server http://localhost:8080 --realm master --user $User --password $Password;
 	else
 		echo "===> Missing $File";
 		exit 1;
@@ -41,8 +27,10 @@ load_client2()
 
 }
 
+	kubectl -n keycloak exec -i bank-0 -- bash -c "mkdir $TmpDir";
+
 for ClientName in accounts cash exchange front-ui transfer; do #accounts blocker cash exchange exchange-generator front-ui notifications transfer
-	load_client2 $ClientName;
+	load_client $ClientName;
 done;
 
 exit 0;
