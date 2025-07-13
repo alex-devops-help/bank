@@ -7,7 +7,16 @@
 скрипт ~/project/utils/recreate_minikube.sh без параметров. Необходимо
 дождаться его завершения перед запуском остальных скриптов.
 Этот скрипт пересоздаёт instance minikube только при запуске под
-пользователем minikube. При запуске под другими пользователями скрипт
+пользователем minikube. 
+
+Пример:
+```
+stanislav@twc-build:~/project$ sudo su -l minikube
+minikube@twc-build:~$ cd ~/project/utils/
+minikube@twc-build:~/project/utils$ ./recreate_minikube.sh 
+```
+
+При запуске под другими пользователями скрипт
 настраивает kubectl для доступа к minikube при условии запуска на сервере,
 где был установлен minikube. 
 
