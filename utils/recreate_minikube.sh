@@ -46,4 +46,4 @@ minikube node add;
 minikube kubectl -- create token headlamp --duration 24h -n headlamp;
 minikube profile list; minikube kubectl -- get all -A; minikube kubectl config view;
 chmod 750 -R ~/.minikube;
-chmod 660 ~/.kube/config;
+chmod 666 ~/.kube/config;
