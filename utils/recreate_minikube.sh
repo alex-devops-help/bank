@@ -2,14 +2,19 @@
 
 # The AUTHOR of this file is Alexander Borisovich Prokopyev (devops@aulix.com), July 2025
 
-set -x;
+#set -x;
 
 Version=v1.32.6;
 #Version=v1.31.10;
 
 if [ "$USER" != "minikube" ]; then
-	echo "Error: this script shall be run under minikube user! Exiting with code 1 ...";
-	exit 1;
+	mkdir ~/.kube;
+	rm -Rf ~/.kube/config;
+	ln -s /home/minikube/.kube/config  ~/.kube/;
+	echo "Created symlink to /home/minikube/.kube/config";
+	echo "Minikube instance recreation shall be run under minikube user!";
+	kubectl get all;
+	exit 0;
 fi;
 
 start_mk()
@@ -41,3 +46,4 @@ minikube node add;
 minikube kubectl -- create token headlamp --duration 24h -n headlamp;
 minikube profile list; minikube kubectl -- get all -A; minikube kubectl config view;
 chmod 750 -R ~/.minikube;
+chmod 660 ~/.kube/config;
