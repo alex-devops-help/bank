@@ -13,7 +13,7 @@ if [ "$USER" != "minikube" ]; then
 	ln -s /home/minikube/.kube/config  ~/.kube/;
 	echo "Created symlink to /home/minikube/.kube/config";
 	echo "Minikube instance recreation shall be run under minikube user!";
-	kubectl get all;
+	kubectl get nodes;
 	exit 0;
 fi;
 
