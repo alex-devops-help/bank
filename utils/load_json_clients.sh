@@ -14,7 +14,7 @@ load_client()
 {
 	local Module=$1;
 	local FileName=$Module.json;
-	local File=/project/$Module/src/main/resources/$FileName;
+	local File=~/project/$Module/src/main/resources/$FileName;
 	if [ -f $File ]; then
 #		docker exec keycloak /opt/keycloak/bin/kcadm.sh create clients -f $File  --server http://localhost:8080 --realm master --user $User --password $Password;
 #		kubectl -n keycloak cp $File bank-0:/tmp/; # tar missing in the Keycloak official container image
@@ -27,7 +27,7 @@ load_client()
 
 }
 
-	kubectl -n keycloak exec -i bank-0 -- bash -c "mkdir $TmpDir";
+kubectl -n keycloak exec -i bank-0 -- bash -c "mkdir $TmpDir";
 
 for ClientName in accounts cash exchange front-ui transfer; do #accounts blocker cash exchange exchange-generator front-ui notifications transfer
 	load_client $ClientName;

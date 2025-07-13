@@ -7,6 +7,11 @@ set -x;
 Version=v1.32.6;
 #Version=v1.31.10;
 
+if [ "$USER" != "minikube" ]; then
+	echo "Error: this script shall be run under minikube user! Exiting with code 1 ...";
+	exit 1;
+fi;
+
 start_mk()
 {
 
